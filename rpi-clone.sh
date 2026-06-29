@@ -19,12 +19,20 @@ set -euo pipefail
 
 HOSTNAME="$(hostname)"
 DATE="$(date +%Y%m%d-%H%M%S)"
-IMG="${1:-/DATA/rpi-clone-${HOSTNAME}-${DATE}.img}"
 EXCLUDE_FILE="/tmp/rpi-clone-excludes.txt"
+BIND_MNT="/mnt/clone-output"
+BIND_MOUNTED=false
+
+# image-backup requires output under /mnt/ or /media/.
+# Bind-mount the real output directory there so the file stays on local storage.
+IMG_REAL="${1:-/DATA/rpi-clone-${HOSTNAME}-${DATE}.img}"
+IMG_DIR="$(dirname "$IMG_REAL")"
+IMG_NAME="$(basename "$IMG_REAL")"
+IMG="${BIND_MNT}/${IMG_NAME}"
 
 echo "=== RPi 5 NVMe Clone ==="
 echo "Host:   $HOSTNAME"
-echo "Output: $IMG"
+echo "Output: $IMG_REAL"
 echo ""
 
 # ── Install image-backup if missing ──────────────────────────────────────────
@@ -50,7 +58,8 @@ cat > "$EXCLUDE_FILE" <<EXCLUDES
 # MinIO CAN edge2 bucket data
 /DATA/AppData/big-bear-minio/can-edge2/
 
-# The output image itself
+# The output image itself (both real and bind-mount paths)
+${IMG_REAL}
 ${IMG}
 EXCLUDES
 
@@ -70,6 +79,10 @@ cleanup() {
             docker start "$c" && echo "    Started: $c"
         done
     fi
+    if $BIND_MOUNTED; then
+        umount "$BIND_MNT" 2>/dev/null || true
+        rmdir "$BIND_MNT" 2>/dev/null || true
+    fi
     rm -f "$EXCLUDE_FILE"
 }
 trap cleanup EXIT
@@ -88,6 +101,12 @@ done
 sync
 sleep 2
 
+# ── Bind-mount output directory under /mnt/ (image-backup requirement) ───────
+
+mkdir -p "$BIND_MNT"
+mount --bind "$IMG_DIR" "$BIND_MNT"
+BIND_MOUNTED=true
+
 # ── Run image-backup ─────────────────────────────────────────────────────────
 
 echo ""
@@ -97,9 +116,9 @@ image-backup -i "$IMG" -o "--exclude-from=$EXCLUDE_FILE,--delete-excluded"
 
 echo ""
 echo "=== Clone complete ==="
-echo "Image: $IMG"
-echo "Size:  $(du -h "$IMG" | cut -f1)"
+echo "Image: $IMG_REAL"
+echo "Size:  $(du -h "$IMG_REAL" | cut -f1)"
 echo ""
 echo "Next steps:"
-echo "  1. Copy the image to your NAS:  scp $IMG user@nas:/path/"
-echo "  2. Flash to a blank NVMe with:  sudo ./rpi-burn.sh $IMG"
+echo "  1. Copy the image to your NAS:  scp $IMG_REAL user@nas:/path/"
+echo "  2. Flash to a blank NVMe with:  sudo ./rpi-burn.sh $IMG_REAL"
