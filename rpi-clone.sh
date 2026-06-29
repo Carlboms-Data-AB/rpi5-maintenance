@@ -75,7 +75,7 @@ cleanup() {
 trap cleanup EXIT
 
 echo ">>> Stopping write-heavy containers..."
-for c in node-red influxdb; do
+for c in node-red influxdb minio; do
     if docker inspect --format='{{.State.Running}}' "$c" 2>/dev/null | grep -q true; then
         docker stop "$c"
         CONTAINERS_STOPPED+=("$c")

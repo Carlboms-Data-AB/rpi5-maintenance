@@ -30,7 +30,7 @@ sudo ./rpi-clone.sh
 
 This will:
 - Install [RonR image-backup](https://github.com/seamusdemora/RonR-RPi-image-utils) if not present
-- Stop Node-RED and InfluxDB for a consistent snapshot
+- Stop Node-RED, InfluxDB, and MinIO for a consistent snapshot
 - Create a content-sized `.img` at `/DATA/rpi-clone-<hostname>-<date>.img`
 - Restart the stopped containers
 - Auto-resize is baked in — the root partition expands on first boot
@@ -79,6 +79,6 @@ You can also pass a local file: `sudo ./rpi-burn.sh /path/to/image.img`
 ## Safety
 
 - `rpi-survey.sh` and `rpi-burn.sh` are read-only / write-to-NVMe-only
-- `rpi-clone.sh` briefly stops Node-RED and InfluxDB (auto-restarts on completion or failure)
+- `rpi-clone.sh` briefly stops Node-RED, InfluxDB, and MinIO (auto-restarts on completion or failure)
 - `rpi-burn.sh` refuses to write to the current boot disk
 - Cold spares only — identical PARTUUID/hostname, never run alongside the original
