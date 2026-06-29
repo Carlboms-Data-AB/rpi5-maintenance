@@ -18,14 +18,12 @@ flash that image to a blank NVMe, and keep drives healthy.
 | `rpi-burn.sh` | Spare Pi (SD card boot) | Flashes the `.img` to a blank NVMe drive |
 | `rpi-health.sh` | Any Pi | Read-only health report (disk, Docker logs, NVMe SMART, journal) + opt-in cleanup |
 
-Replace `OWNER/REPO` in the commands below with your repository path.
-
 ## Clone workflow
 
 ### 1. Survey
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/OWNER/REPO/main/rpi-survey.sh | sudo bash
+curl -fsSL https://raw.githubusercontent.com/Carlboms-Data-AB/rpi5-maintenance/main/rpi-survey.sh | sudo bash
 ```
 
 Reports geometry and a **CLONE SIZE ESTIMATE** (root used − excluded bulk dirs
@@ -34,7 +32,7 @@ Reports geometry and a **CLONE SIZE ESTIMATE** (root used − excluded bulk dirs
 ### 2. Clone (on the target Pi)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/OWNER/REPO/main/rpi-clone.sh -o rpi-clone.sh
+curl -fsSL https://raw.githubusercontent.com/Carlboms-Data-AB/rpi5-maintenance/main/rpi-clone.sh -o rpi-clone.sh
 chmod +x rpi-clone.sh
 sudo ./rpi-clone.sh                 # default output dir: /DATA
 ```
@@ -91,7 +89,7 @@ NVMe drive. The burn script reads a local file or mounts a NAS share directly
 and streams to the NVMe — nothing is saved to the SD card.
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/OWNER/REPO/main/rpi-burn.sh -o rpi-burn.sh
+curl -fsSL https://raw.githubusercontent.com/Carlboms-Data-AB/rpi5-maintenance/main/rpi-burn.sh -o rpi-burn.sh
 chmod +x rpi-burn.sh
 sudo ./rpi-burn.sh /path/to/rpi-clone-<hostname>-<date>.img   # local file
 # or:  sudo ./rpi-burn.sh //NAS-IP/share                       # from a NAS share
@@ -114,7 +112,7 @@ Docker container logs, NVMe SMART wear/health (with a plain-language verdict),
 and journal size.
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/OWNER/REPO/main/rpi-health.sh -o rpi-health.sh
+curl -fsSL https://raw.githubusercontent.com/Carlboms-Data-AB/rpi5-maintenance/main/rpi-health.sh -o rpi-health.sh
 chmod +x rpi-health.sh
 sudo ./rpi-health.sh
 ```
@@ -141,4 +139,4 @@ to pick them up. The script does **not** restart the Docker daemon for you.
 
 > Note: the GitHub raw CDN caches the `main` ref for a few minutes. If a freshly
 > pushed change isn't reflected, fetch a commit-pinned URL instead:
-> `.../REPO/<commit-sha>/rpi-clone.sh`.
+> `.../rpi5-maintenance/<commit-sha>/rpi-clone.sh`.
