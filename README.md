@@ -42,7 +42,7 @@ This will:
 
 **Estimated image size**: ~13–18 GB (vs 143 GB total used on pi-gateway)
 
-Custom output path: `sudo ./rpi-clone.sh /path/to/output.img`
+Custom output directory: `sudo ./rpi-clone.sh /other/dir` (default: `/DATA`)
 
 ### 3. Copy image to NAS
 
