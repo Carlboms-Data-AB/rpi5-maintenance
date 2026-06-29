@@ -50,29 +50,26 @@ Custom output path: `sudo ./rpi-clone.sh /path/to/output.img`
 scp /DATA/rpi-clone-*.img user@nas:/path/to/backups/
 ```
 
-### 4. Copy image to backup Pi
+### 4. Burn (on backup Pi, booted from SD card)
 
-Boot the backup RPi 5 from an SD card with Raspberry Pi OS. Copy the image from NAS:
-
-```bash
-scp user@nas:/path/to/backups/rpi-clone-pi-gateway-*.img /tmp/
-```
-
-### 5. Burn (on backup Pi)
+Boot the backup RPi 5 from an SD card with Raspberry Pi OS. Insert a blank NVMe drive. The burn script mounts the NAS share directly and streams the image to the NVMe — nothing is saved to the SD card.
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/Carlboms-Data-AB/rpi5-survey/main/rpi-burn.sh -o rpi-burn.sh
 chmod +x rpi-burn.sh
-sudo ./rpi-burn.sh /tmp/rpi-clone-pi-gateway-*.img
+sudo ./rpi-burn.sh //192.168.1.10/backups
 ```
 
-This will:
-- Detect the NVMe drive (`/dev/nvme0n1`)
-- Confirm before erasing
-- Flash the image with `dd`
-- The root filesystem auto-expands on first boot
+The script will:
+- Mount the NAS share (read-only, prompts for credentials)
+- List available `.img` files and let you pick one
+- Confirm before erasing the NVMe
+- Stream the image directly from NAS → NVMe with `dd`
+- Auto-expand root filesystem on first boot
 
-### 6. Boot from NVMe
+You can also pass a local file: `sudo ./rpi-burn.sh /path/to/image.img`
+
+### 5. Boot from NVMe
 
 1. `sudo poweroff`
 2. Remove the SD card
