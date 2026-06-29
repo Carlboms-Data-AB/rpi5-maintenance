@@ -92,7 +92,7 @@ sleep 2
 echo ""
 echo ">>> Creating clone image (this will take a while)..."
 echo ""
-image-backup -i "$IMG" -o "--exclude-from=$EXCLUDE_FILE","--delete-excluded"
+image-backup -i "$IMG" -o "--exclude-from=$EXCLUDE_FILE,--delete-excluded"
 
 echo ""
 echo "=== Clone complete ==="

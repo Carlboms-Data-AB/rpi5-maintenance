@@ -73,7 +73,10 @@ elif [[ "$INPUT" == //* ]]; then
     # SMB/CIFS share — mount and browse
     SHARE="$INPUT"
 
-    apt-get install -y -qq cifs-utils 2>/dev/null || true
+    if ! dpkg -s cifs-utils &>/dev/null; then
+        echo ">>> Installing cifs-utils..."
+        apt-get update -qq && apt-get install -y -qq cifs-utils
+    fi
 
     read -rp "NAS username (or press Enter for guest): " NAS_USER
     MOUNT_OPTS="ro"
