@@ -83,8 +83,19 @@ For remote units without local backup storage, pull the image to your machine
 rsync -avP --sparse user@TARGET-PI:/DATA/rpi-clone-*.img .
 ```
 
-Then move it to wherever the spare Pi can reach it (NAS, USB drive, or scp
-directly to the spare).
+**Verify the copy is byte-perfect** with sha256 — compute on both ends and
+compare. This reads the whole image, so on a Pi 5 it takes a minute or two
+(SHA-256 is CPU-bound); that's expected. Run it once per side:
+
+```bash
+# On the Pi:
+sha256sum /DATA/rpi-clone-*.img
+# On your Mac:
+shasum -a 256 rpi-clone-*.img
+```
+
+Matching hashes = the transfer is intact. Then move the image to wherever the
+spare Pi can reach it (NAS, USB drive, or scp directly to the spare).
 
 ### 5. Burn (on the spare Pi, booted from SD card)
 
