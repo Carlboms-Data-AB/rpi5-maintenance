@@ -33,13 +33,13 @@ Reports geometry and a **CLONE SIZE ESTIMATE** (root used − excluded bulk dirs
 ```bash
 curl -fsSL https://raw.githubusercontent.com/Carlboms-Data-AB/rpi5-maintenance/main/rpi-clone.sh -o rpi-clone.sh
 chmod +x rpi-clone.sh
-sudo ./rpi-clone.sh                 # default output dir: /DATA
+sudo ./rpi-clone.sh                 # default output dir: /DATA/AppData
 ```
 
 This will:
 - Calculate the image size from **actual included data** and print it before copying
 - Stop the configured write-heavy containers for a consistent snapshot
-- Build a raw `.img` from scratch (loopback + rsync) at `/DATA/rpi-clone-<hostname>-<date>.img`, saved locally on the NVMe
+- Build a raw `.img` from scratch (loopback + rsync) at `/DATA/AppData/rpi-clone-<hostname>-<date>.img`, saved locally on the NVMe
 - Replicate the MBR table with the **same disk-id** so PARTUUIDs match `fstab`/`cmdline.txt` unchanged
 - Install a first-boot systemd service that auto-expands the root partition + filesystem
 - Restart the stopped containers (also on failure, via cleanup trap)
@@ -59,14 +59,14 @@ The kept metadata/config (InfluxDB `influxd.bolt` / `influxd.sqlite`, MinIO
 **Image size** = included data + ~15% + 1 GiB headroom. It scales with whatever
 is on disk at clone time, so it varies between runs.
 
-Custom output directory: `sudo ./rpi-clone.sh /other/dir` (default: `/DATA`)
+Custom output directory: `sudo ./rpi-clone.sh /other/dir` (default: `/DATA/AppData`)
 
 ### 3. Verify the image (recommended)
 
 Mount the image read-only and confirm structure and your KEEP/EXCLUDE choices:
 
 ```bash
-IMG=/DATA/rpi-clone-<hostname>-<date>.img
+IMG=/DATA/AppData/rpi-clone-<hostname>-<date>.img
 LOOP=$(sudo losetup -f --show -P "$IMG")
 sudo mkdir -p /mnt/verify && sudo mount ${LOOP}p2 /mnt/verify
 sudo ls -la /mnt/verify/DATA/AppData/influxdb/data/   # influxd.bolt + influxd.sqlite present, engine ABSENT
@@ -80,7 +80,7 @@ For remote units without local backup storage, pull the image to your machine
 (sparse-aware to keep it at actual size):
 
 ```bash
-rsync -avP --sparse user@TARGET-PI:/DATA/rpi-clone-*.img .
+rsync -avP --sparse user@TARGET-PI:/DATA/AppData/rpi-clone-*.img .
 ```
 
 **Verify the copy is byte-perfect** with sha256 — compute on both ends and
@@ -144,6 +144,46 @@ sudo ./rpi-health.sh --vacuum-journal 200M  # shrink the systemd journal
 Note: Docker log-rotation caps apply to containers created *after* the change —
 existing containers must be recreated (e.g. `docker compose up -d --force-recreate`)
 to pick them up. The script does **not** restart the Docker daemon for you.
+
+### Disable Docker logging entirely
+
+To eliminate container JSON logs as a source of NVMe wear — rather than just
+capping them — set the daemon log driver to `none`. This drops *all* stdout/stderr
+logs, so `docker logs <container>` will no longer work; only do this if you don't
+rely on it.
+
+```bash
+# 1. Set daemon.json
+sudo tee /etc/docker/daemon.json << 'EOF'
+{
+  "log-driver": "none"
+}
+EOF
+
+# 2. Restart Docker
+sudo systemctl restart docker
+
+# 3. Verify daemon setting
+sudo docker info | grep "Logging Driver"
+
+# 4. Truncate existing logs
+sudo find /var/lib/docker/containers -name '*-json.log' -exec truncate -s 0 {} \;
+
+# 5. Verify logs are zeroed
+sudo find /var/lib/docker/containers -name '*-json.log' -exec ls -lh {} \;
+
+# 6. Add cron job (hourly truncation as a safety net)
+sudo crontab -e
+# Add this line:
+# 0 * * * * /usr/bin/find /var/lib/docker/containers -name '*-json.log' -exec /usr/bin/truncate -s 0 {} \;
+
+# 7. Verify cron job
+sudo crontab -l
+```
+
+The `log-driver: none` setting only applies to containers created *after* the
+restart, so the hourly cron truncates any logs still written by pre-existing
+containers until they're recreated.
 
 ## Safety
 

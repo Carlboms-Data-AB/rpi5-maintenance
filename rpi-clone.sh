@@ -11,7 +11,7 @@
 # config, identity, OS, Docker layers, and dashboards.
 #
 # Usage:
-#   sudo ./rpi-clone.sh [output_directory]      # default: /DATA
+#   sudo ./rpi-clone.sh [output_directory]      # default: /DATA/AppData
 #
 set -euo pipefail
 
@@ -21,7 +21,7 @@ set -euo pipefail
 
 HOSTNAME="$(hostname)"
 DATE="$(date +%Y%m%d-%H%M%S)"
-OUT_DIR="${1:-/DATA}"
+OUT_DIR="${1:-/DATA/AppData}"
 IMG="${OUT_DIR}/rpi-clone-${HOSTNAME}-${DATE}.img"
 
 # Containers stopped briefly during the snapshot (write-heavy services).
