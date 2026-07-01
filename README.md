@@ -89,7 +89,7 @@ compare. This reads the whole image, so on a Pi 5 it takes a minute or two
 
 ```bash
 # On the Pi:
-sha256sum /DATA/rpi-clone-*.img
+sha256sum /DATA/AppData/rpi-clone-*.img
 # On your Mac:
 shasum -a 256 rpi-clone-*.img
 ```
